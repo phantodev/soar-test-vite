@@ -1,13 +1,65 @@
-import { type FC, useState } from "react";
+import { type FC, useState, useMemo } from "react";
 import { Input } from "@heroui/input";
 import { I18nProvider } from "@react-aria/i18n";
 import { DatePicker } from "@heroui/date-picker";
-import { parseDate, type DateValue } from "@internationalized/date";
-import { format } from "date-fns";
+import { today, type DateValue } from "@internationalized/date";
+import { useUserStore } from "../store/useUserStore";
+import { toast } from "react-toastify";
 
 const SettingsPage: FC = () => {
 	const [activeTab, setActiveTab] = useState("profile");
-	const formattedToday = format(new Date(), "yyyy-MM-dd");
+
+	// Get only the updateProfile function from the store
+	const updateProfile = useUserStore((state) => state.updateProfile);
+
+	// Get initial values from the store only once
+	const initialValues = useMemo(() => {
+		const state = useUserStore.getState();
+		return {
+			name: state.name,
+			userName: state.userName,
+			email: state.email,
+			password: state.password,
+			dateOfBirth: state.dateOfBirth || today("UTC"), // Provide fallback
+			presentAddress: state.presentAddress,
+			permanentAddress: state.permanentAddress,
+			city: state.city,
+			postalCode: state.postalCode,
+			country: state.country,
+			profilePicture: state.profilePicture,
+		};
+	}, []);
+
+	// Local form state - initialized with memoized values
+	const [formData, setFormData] = useState(initialValues);
+	// Add loading state for the Save button
+	const [isLoading, setIsLoading] = useState(false);
+
+	// Handle input changes
+	const handleInputChange = (field: string, value: string | DateValue) => {
+		setFormData((prev) => ({
+			...prev,
+			[field]: value,
+		}));
+	};
+
+	// Save changes to Zustand store
+	const handleSave = () => {
+		setIsLoading(true);
+		// Simulate a small delay for better UX
+		setTimeout(() => {
+			updateProfile(formData);
+			toast.success("Profile updated successfully!", {
+				position: "top-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+			});
+			setIsLoading(false);
+		}, 500);
+	};
 
 	return (
 		<div className="p-4 sm:p-6 w-full mx-auto bg-white rounded-xl shadow-sm">
@@ -42,7 +94,7 @@ const SettingsPage: FC = () => {
 						<div className="relative w-24 h-24 sm:w-32 sm:h-32">
 							<div className="w-full h-full rounded-full overflow-hidden bg-gray-200">
 								<img
-									src="/assets/avatar-big.png"
+									src={formData.profilePicture}
 									alt="Profile"
 									className="object-cover w-full h-full"
 								/>
@@ -81,7 +133,8 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="yourName"
 									type="text"
-									defaultValue="Charlene Reed"
+									value={formData.name}
+									onChange={(e) => handleInputChange("name", e.target.value)}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -101,7 +154,10 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="userName"
 									type="text"
-									defaultValue="Charlene Reed"
+									value={formData.userName}
+									onChange={(e) =>
+										handleInputChange("userName", e.target.value)
+									}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -121,7 +177,8 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="email"
 									type="email"
-									defaultValue="charlenereed@gmail.com"
+									value={formData.email}
+									onChange={(e) => handleInputChange("email", e.target.value)}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -141,7 +198,10 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="password"
 									type="password"
-									defaultValue="**********"
+									value={formData.password}
+									onChange={(e) =>
+										handleInputChange("password", e.target.value)
+									}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -157,12 +217,16 @@ const SettingsPage: FC = () => {
 											id="dob"
 											size="lg"
 											label="Date of Birth"
-											value={parseDate(formattedToday) as DateValue}
+											value={formData.dateOfBirth}
+											onChange={(date) => {
+												if (date) {
+													handleInputChange("dateOfBirth", date);
+												}
+											}}
 											labelPlacement="outside"
 											color="secondary"
 											classNames={{
 												base: "w-full text-secondary",
-
 												inputWrapper: "!bg-zinc-100",
 											}}
 										/>
@@ -182,7 +246,10 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="presentAddress"
 									type="text"
-									defaultValue="San Jose, California, USA"
+									value={formData.presentAddress}
+									onChange={(e) =>
+										handleInputChange("presentAddress", e.target.value)
+									}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -202,7 +269,10 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="permanentAddress"
 									type="text"
-									defaultValue="San Jose, California, USA"
+									value={formData.permanentAddress}
+									onChange={(e) =>
+										handleInputChange("permanentAddress", e.target.value)
+									}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -222,7 +292,8 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="city"
 									type="text"
-									defaultValue="San Jose"
+									value={formData.city}
+									onChange={(e) => handleInputChange("city", e.target.value)}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -242,7 +313,10 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="postalCode"
 									type="text"
-									defaultValue="45962"
+									value={formData.postalCode}
+									onChange={(e) =>
+										handleInputChange("postalCode", e.target.value)
+									}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -262,7 +336,8 @@ const SettingsPage: FC = () => {
 									size="lg"
 									id="country"
 									type="text"
-									defaultValue="USA"
+									value={formData.country}
+									onChange={(e) => handleInputChange("country", e.target.value)}
 									className="w-full"
 									classNames={{
 										input: "!text-secondary",
@@ -275,9 +350,11 @@ const SettingsPage: FC = () => {
 						<div className="flex justify-center lg:justify-end mt-6 col-span-1 lg:col-span-2">
 							<button
 								type="button"
-								className="w-full sm:w-40 px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
+								onClick={handleSave}
+								disabled={isLoading}
+								className="w-full sm:w-40 px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
 							>
-								Save
+								{isLoading ? "Saving..." : "Save"}
 							</button>
 						</div>
 					</div>
