@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { loginUser, logoutUser, type LoginCredentials, type AuthResponse } from "../services/auth";
+import { loginUser, logoutUser } from "../services/auth";
+import type { LoginCredentials, AuthResponse } from "../types/auth";
 
 export function useAuth() {
   const navigate = useNavigate();
