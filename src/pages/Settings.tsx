@@ -41,11 +41,25 @@ const SettingsPage: FC = () => {
 	// State for password visibility toggle
 	const [showPassword, setShowPassword] = useState(false);
 
+	// Custom email validation
+	const validateEmail = (email: string): boolean => {
+		const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+		return emailRegex.test(email);
+	};
+
+	// State for custom email validation error
+	const [emailError, setEmailError] = useState<string | null>(null);
+
 	// Handle input changes
 	const handleInputChange = (field: string, value: string | DateValue) => {
 		// Clear error state when user types in a field
 		if (errors[field]) {
 			setErrors(prev => ({ ...prev, [field]: false }));
+		}
+
+		// Clear email error when typing in email field
+		if (field === "email") {
+			setEmailError(null);
 		}
 
 		setFormData((prev) => ({
@@ -78,6 +92,14 @@ const SettingsPage: FC = () => {
 			
 			if (isEmpty) {
 				newErrors[field] = true;
+				hasErrors = true;
+			}
+		}
+
+		// Validate email format if not empty
+		if (!newErrors.email && typeof formData.email === 'string' && formData.email.trim() !== '') {
+			if (!validateEmail(formData.email)) {
+				setEmailError(`Please include an '@' in the email address. '${formData.email}' is missing an '@'.`);
 				hasErrors = true;
 			}
 		}
@@ -238,12 +260,13 @@ const SettingsPage: FC = () => {
 								<Input
 									size="lg"
 									id="email"
-									type="email"
+									type="text" /* Changed from 'email' to 'text' to disable browser validation */
 									value={formData.email}
 									onChange={(e) => handleInputChange("email", e.target.value)}
 									className="w-full"
-									isInvalid={errors.email}
-									errorMessage={errors.email ? "This field is required" : ""}
+									isInvalid={errors.email || emailError !== null}
+									errorMessage={errors.email ? "This field is required" : emailError || ""}
+									aria-label="Email address"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
