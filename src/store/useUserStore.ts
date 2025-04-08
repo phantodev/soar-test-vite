@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { today } from "@internationalized/date";
-import type { DateValue } from "@internationalized/date";
 
 // Define the user store state interface
 interface UserState {
@@ -10,7 +8,7 @@ interface UserState {
 	userName: string;
 	email: string;
 	password: string;
-	dateOfBirth: DateValue;
+	dateOfBirth: string;
 	presentAddress: string;
 	permanentAddress: string;
 	city: string;
@@ -50,7 +48,7 @@ export const useUserStore = create<UserState>()(
 			userName: "Charlene Reed",
 			email: "charlenereed@gmail.com",
 			password: "**********", // In a real app, never store plain text passwords
-			dateOfBirth: today("UTC"),
+			dateOfBirth: "2000-01-01", // Valor fixo para data de nascimento padrão
 			presentAddress: "San Jose, California, USA",
 			permanentAddress: "San Jose, California, USA",
 			city: "San Jose",
@@ -95,7 +93,7 @@ export const useUserStore = create<UserState>()(
 				})),
 		}),
 		{
-			name: "user-storage", // unique name for localStorage key
+			name: "user-storage",
 		},
 	),
 );

@@ -1,18 +1,16 @@
-import { type FC, useState, useMemo } from "react";
+import { type FC, useState, useMemo, useEffect } from "react";
 import { Input } from "@heroui/input";
 import { I18nProvider } from "@react-aria/i18n";
 import { DatePicker } from "@heroui/date-picker";
-import { today, parseDate, type DateValue } from "@internationalized/date";
+import { parseDate, type DateValue } from "@internationalized/date";
 import { useUserStore } from "../store/useUserStore";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { formatDateFromDatePicker } from "../utils/dateUtils";
 
 const SettingsPage: FC = () => {
 	const [activeTab, setActiveTab] = useState("profile");
 	const formattedToday = format(new Date(), "yyyy-MM-dd");
-
-	// Get only the updateProfile function from the store
-	const updateProfile = useUserStore((state) => state.updateProfile);
 
 	// Get initial values from the store only once
 	const initialValues = useMemo(() => {
@@ -22,7 +20,7 @@ const SettingsPage: FC = () => {
 			userName: state.userName,
 			email: state.email,
 			password: state.password,
-			dateOfBirth: state.dateOfBirth || today("UTC"), // Provide fallback
+			dateOfBirth: state.dateOfBirth,
 			presentAddress: state.presentAddress,
 			permanentAddress: state.permanentAddress,
 			city: state.city,
@@ -34,6 +32,42 @@ const SettingsPage: FC = () => {
 
 	// Local form state - initialized with memoized values
 	const [formData, setFormData] = useState(initialValues);
+
+	// Estado específico para a data de nascimento - converte a string do Zustand para um objeto DateValue
+	const [dateOfBirth, setDateOfBirth] = useState(() => {
+		try {
+			// Verificamos se dateOfBirth é uma string válida
+			const dateStr =
+				typeof initialValues.dateOfBirth === "string"
+					? initialValues.dateOfBirth
+					: formattedToday;
+
+			// Extrair os componentes da data da string (yyyy-MM-dd)
+			const [year, month, day] = dateStr.split("-").map(Number);
+
+			// Criar o objeto DateValue usando parseDate sem adicionar informações de hora
+			// Isso evita problemas de fuso horário
+			return parseDate(
+				`${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`,
+			);
+		} catch (error) {
+			console.error("Erro ao converter data:", error);
+			// Em caso de erro, usamos a data atual
+			return parseDate(formattedToday);
+		}
+	});
+
+	// Atualiza o formData quando a data de nascimento muda
+	useEffect(() => {
+		if (dateOfBirth) {
+			const formattedDate = formatDateFromDatePicker(dateOfBirth);
+			setFormData((prev) => ({ ...prev, dateOfBirth: formattedDate }));
+		}
+	}, [dateOfBirth]);
+
+	// Get only the updateProfile function from the store
+	const updateProfile = useUserStore((state) => state.updateProfile);
+
 	// Add loading state for the Save button
 	const [isLoading, setIsLoading] = useState(false);
 	// Add error states for form validation
@@ -54,7 +88,7 @@ const SettingsPage: FC = () => {
 	const handleInputChange = (field: string, value: string | DateValue) => {
 		// Clear error state when user types in a field
 		if (errors[field]) {
-			setErrors(prev => ({ ...prev, [field]: false }));
+			setErrors((prev) => ({ ...prev, [field]: false }));
 		}
 
 		// Clear email error when typing in email field
@@ -79,7 +113,7 @@ const SettingsPage: FC = () => {
 			"permanentAddress",
 			"city",
 			"postalCode",
-			"country"
+			"country",
 		];
 
 		const newErrors: Record<string, boolean> = {};
@@ -88,8 +122,8 @@ const SettingsPage: FC = () => {
 		// Check each field for empty values
 		for (const field of fieldsToValidate) {
 			const value = formData[field as keyof typeof formData];
-			const isEmpty = typeof value === 'string' && value.trim() === '';
-			
+			const isEmpty = typeof value === "string" && value.trim() === "";
+
 			if (isEmpty) {
 				newErrors[field] = true;
 				hasErrors = true;
@@ -97,9 +131,15 @@ const SettingsPage: FC = () => {
 		}
 
 		// Validate email format if not empty
-		if (!newErrors.email && typeof formData.email === 'string' && formData.email.trim() !== '') {
+		if (
+			!newErrors.email &&
+			typeof formData.email === "string" &&
+			formData.email.trim() !== ""
+		) {
 			if (!validateEmail(formData.email)) {
-				setEmailError(`Please include an '@' in the email address. '${formData.email}' is missing an '@'.`);
+				setEmailError(
+					`Please include an '@' in the email address. '${formData.email}' is missing an '@'.`,
+				);
 				hasErrors = true;
 			}
 		}
@@ -126,7 +166,9 @@ const SettingsPage: FC = () => {
 		setIsLoading(true);
 		// Simulate a small delay for better UX
 		setTimeout(() => {
+			// Save to Zustand with the DateValue object intact
 			updateProfile(formData);
+
 			toast.success("Profile updated successfully!", {
 				position: "top-right",
 				autoClose: 3000,
@@ -218,7 +260,7 @@ const SettingsPage: FC = () => {
 									errorMessage={errors.name ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -244,7 +286,7 @@ const SettingsPage: FC = () => {
 									errorMessage={errors.userName ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -265,11 +307,13 @@ const SettingsPage: FC = () => {
 									onChange={(e) => handleInputChange("email", e.target.value)}
 									className="w-full"
 									isInvalid={errors.email || emailError !== null}
-									errorMessage={errors.email ? "This field is required" : emailError || ""}
+									errorMessage={
+										errors.email ? "This field is required" : emailError || ""
+									}
 									aria-label="Email address"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -338,7 +382,7 @@ const SettingsPage: FC = () => {
 									}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -350,7 +394,13 @@ const SettingsPage: FC = () => {
 										id="dob"
 										size="lg"
 										label="Date of Birth"
-										value={parseDate(formattedToday) as DateValue}
+										value={dateOfBirth}
+										granularity="day"
+										onChange={(date) => {
+											if (date) {
+												setDateOfBirth(date);
+											}
+										}}
 										labelPlacement="outside"
 										color="secondary"
 										classNames={{
@@ -380,10 +430,12 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									isInvalid={errors.presentAddress}
-									errorMessage={errors.presentAddress ? "This field is required" : ""}
+									errorMessage={
+										errors.presentAddress ? "This field is required" : ""
+									}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -406,10 +458,12 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									isInvalid={errors.permanentAddress}
-									errorMessage={errors.permanentAddress ? "This field is required" : ""}
+									errorMessage={
+										errors.permanentAddress ? "This field is required" : ""
+									}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -433,7 +487,7 @@ const SettingsPage: FC = () => {
 									errorMessage={errors.city ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -456,10 +510,12 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									isInvalid={errors.postalCode}
-									errorMessage={errors.postalCode ? "This field is required" : ""}
+									errorMessage={
+										errors.postalCode ? "This field is required" : ""
+									}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
@@ -483,7 +539,7 @@ const SettingsPage: FC = () => {
 									errorMessage={errors.country ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
-										base: "text-secondary"
+										base: "text-secondary",
 									}}
 								/>
 							</div>
