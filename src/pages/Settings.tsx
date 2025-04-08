@@ -1,4 +1,4 @@
-import { type FC, useState, useMemo, useEffect } from "react";
+import { type FC, useState, useMemo, useEffect, useRef } from "react";
 import { Input } from "@heroui/input";
 import { I18nProvider } from "@react-aria/i18n";
 import { DatePicker } from "@heroui/date-picker";
@@ -74,6 +74,9 @@ const SettingsPage: FC = () => {
 	const [errors, setErrors] = useState<Record<string, boolean>>({});
 	// State for password visibility toggle
 	const [showPassword, setShowPassword] = useState(false);
+
+	// Reference for datepicker to allow programmatic focus
+	const datePickerRef = useRef<HTMLDivElement>(null);
 
 	// Custom email validation
 	const validateEmail = (email: string): boolean => {
@@ -188,6 +191,9 @@ const SettingsPage: FC = () => {
 					type="button"
 					onClick={() => setActiveTab("profile")}
 					className={`pb-4 px-2 whitespace-nowrap text-sm sm:text-base font-medium ${activeTab === "profile" ? "border-b-2 border-black" : "text-secondary"}`}
+					aria-label="Edit Profile tab"
+					aria-selected={activeTab === "profile"}
+					role="tab"
 				>
 					Edit Profile
 				</button>
@@ -195,6 +201,9 @@ const SettingsPage: FC = () => {
 					type="button"
 					onClick={() => setActiveTab("preferences")}
 					className={`pb-4 px-2 whitespace-nowrap text-sm sm:text-base font-medium ${activeTab === "preferences" ? "border-b-2 border-black" : "text-secondary"}`}
+					aria-label="Preferences tab"
+					aria-selected={activeTab === "preferences"}
+					role="tab"
 				>
 					Preferences
 				</button>
@@ -202,6 +211,9 @@ const SettingsPage: FC = () => {
 					type="button"
 					onClick={() => setActiveTab("security")}
 					className={`pb-4 px-2 whitespace-nowrap text-sm sm:text-base font-medium ${activeTab === "security" ? "border-b-2 border-black" : "text-secondary"}`}
+					aria-label="Security tab"
+					aria-selected={activeTab === "security"}
+					role="tab"
 				>
 					Security
 				</button>
@@ -258,6 +270,8 @@ const SettingsPage: FC = () => {
 									className="w-full"
 									isInvalid={errors.name}
 									errorMessage={errors.name ? "This field is required" : ""}
+									tabIndex={1}
+									aria-label="Your Name"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary",
@@ -284,6 +298,8 @@ const SettingsPage: FC = () => {
 									className="w-full"
 									isInvalid={errors.userName}
 									errorMessage={errors.userName ? "This field is required" : ""}
+									tabIndex={2}
+									aria-label="User Name"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary",
@@ -310,6 +326,7 @@ const SettingsPage: FC = () => {
 									errorMessage={
 										errors.email ? "This field is required" : emailError || ""
 									}
+									tabIndex={3}
 									aria-label="Email address"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
@@ -337,11 +354,31 @@ const SettingsPage: FC = () => {
 									className="w-full"
 									isInvalid={errors.password}
 									errorMessage={errors.password ? "This field is required" : ""}
+									tabIndex={4}
+									aria-label="Password"
+									onKeyUp={(e) => {
+										// Usando keyUp em vez de keyDown para não interferir com o comportamento padrão do Tab
+										if (e.key === 'Tab' && !e.shiftKey) {
+											// Usando setTimeout para garantir que o foco padrão do Tab já aconteceu
+											setTimeout(() => {
+												if (datePickerRef.current) {
+													const datePickerInput = datePickerRef.current.querySelector('input');
+													if (datePickerInput) {
+														datePickerInput.focus();
+													}
+												}
+											}, 0);
+										}
+									}}
 									endContent={
 										<button
 											type="button"
 											className="focus:outline-none"
 											onClick={() => setShowPassword(!showPassword)}
+											tabIndex={5}
+											aria-label={
+												showPassword ? "Hide password" : "Show password"
+											}
 										>
 											{showPassword ? (
 												<svg
@@ -390,25 +427,39 @@ const SettingsPage: FC = () => {
 							{/* Date of Birth */}
 							<div className="space-y-2">
 								<I18nProvider locale="pt-br">
-									<DatePicker
-										id="dob"
-										size="lg"
-										label="Date of Birth"
-										value={dateOfBirth}
-										granularity="day"
-										onChange={(date) => {
-											if (date) {
-												setDateOfBirth(date);
-											}
-										}}
-										labelPlacement="outside"
-										color="secondary"
-										classNames={{
-											base: "w-full",
-											label: "!text-black !text-sm",
-											inputWrapper: "!bg-zinc-100",
-										}}
-									/>
+									<div ref={datePickerRef}>
+										<DatePicker
+											id="dob"
+											size="lg"
+											label="Date of Birth"
+											value={dateOfBirth}
+											granularity="day"
+											onChange={(date) => {
+												if (date) {
+													setDateOfBirth(date);
+												}
+											}}
+											labelPlacement="outside"
+											color="secondary"
+											tabIndex={6}
+											aria-label="Date of Birth"
+											onKeyDown={(e) => {
+												if (e.key === ' ' || e.key === 'Spacebar') {
+													e.preventDefault();
+													// Find and click the calendar button
+													const calendarButton = datePickerRef.current?.querySelector('button[aria-label="Calendar"]');
+													if (calendarButton instanceof HTMLElement) {
+														calendarButton.click();
+													}
+												}
+											}}
+											classNames={{
+												base: "w-full",
+												label: "!text-black !text-sm",
+												inputWrapper: "!bg-zinc-100",
+											}}
+										/>
+									</div>
 								</I18nProvider>
 							</div>
 
@@ -433,6 +484,8 @@ const SettingsPage: FC = () => {
 									errorMessage={
 										errors.presentAddress ? "This field is required" : ""
 									}
+									tabIndex={7}
+									aria-label="Present Address"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary",
@@ -461,6 +514,8 @@ const SettingsPage: FC = () => {
 									errorMessage={
 										errors.permanentAddress ? "This field is required" : ""
 									}
+									tabIndex={8}
+									aria-label="Permanent Address"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary",
@@ -485,6 +540,8 @@ const SettingsPage: FC = () => {
 									className="w-full"
 									isInvalid={errors.city}
 									errorMessage={errors.city ? "This field is required" : ""}
+									tabIndex={9}
+									aria-label="City"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary",
@@ -513,6 +570,8 @@ const SettingsPage: FC = () => {
 									errorMessage={
 										errors.postalCode ? "This field is required" : ""
 									}
+									tabIndex={10}
+									aria-label="Postal Code"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary",
@@ -537,6 +596,8 @@ const SettingsPage: FC = () => {
 									className="w-full"
 									isInvalid={errors.country}
 									errorMessage={errors.country ? "This field is required" : ""}
+									tabIndex={11}
+									aria-label="Country"
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary",
@@ -551,6 +612,8 @@ const SettingsPage: FC = () => {
 								type="button"
 								onClick={handleSave}
 								disabled={isLoading}
+								tabIndex={12}
+								aria-label="Save profile changes"
 								className="w-full sm:w-40 px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
 							>
 								{isLoading ? "Saving..." : "Save"}
