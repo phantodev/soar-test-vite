@@ -2,12 +2,14 @@ import { type FC, useState, useMemo } from "react";
 import { Input } from "@heroui/input";
 import { I18nProvider } from "@react-aria/i18n";
 import { DatePicker } from "@heroui/date-picker";
-import { today, type DateValue } from "@internationalized/date";
+import { today, parseDate, type DateValue } from "@internationalized/date";
 import { useUserStore } from "../store/useUserStore";
 import { toast } from "react-toastify";
+import { format } from "date-fns";
 
 const SettingsPage: FC = () => {
 	const [activeTab, setActiveTab] = useState("profile");
+	const formattedToday = format(new Date(), "yyyy-MM-dd");
 
 	// Get only the updateProfile function from the store
 	const updateProfile = useUserStore((state) => state.updateProfile);
@@ -137,7 +139,8 @@ const SettingsPage: FC = () => {
 									onChange={(e) => handleInputChange("name", e.target.value)}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -160,7 +163,8 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -181,7 +185,8 @@ const SettingsPage: FC = () => {
 									onChange={(e) => handleInputChange("email", e.target.value)}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -204,7 +209,8 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -212,25 +218,19 @@ const SettingsPage: FC = () => {
 							{/* Date of Birth */}
 							<div className="space-y-2">
 								<I18nProvider locale="pt-br">
-									<div className="text-secondary">
-										<DatePicker
-											id="dob"
-											size="lg"
-											label="Date of Birth"
-											value={formData.dateOfBirth}
-											onChange={(date) => {
-												if (date) {
-													handleInputChange("dateOfBirth", date);
-												}
-											}}
-											labelPlacement="outside"
-											color="secondary"
-											classNames={{
-												base: "w-full text-secondary",
-												inputWrapper: "!bg-zinc-100",
-											}}
-										/>
-									</div>
+									<DatePicker
+										id="dob"
+										size="lg"
+										label="Date of Birth"
+										value={parseDate(formattedToday) as DateValue}
+										labelPlacement="outside"
+										color="secondary"
+										classNames={{
+											base: "w-full",
+											label: "!text-black !text-sm",
+											inputWrapper: "!bg-zinc-100",
+										}}
+									/>
 								</I18nProvider>
 							</div>
 
@@ -252,7 +252,8 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -275,7 +276,8 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -296,7 +298,8 @@ const SettingsPage: FC = () => {
 									onChange={(e) => handleInputChange("city", e.target.value)}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -319,7 +322,8 @@ const SettingsPage: FC = () => {
 									}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>
@@ -340,7 +344,8 @@ const SettingsPage: FC = () => {
 									onChange={(e) => handleInputChange("country", e.target.value)}
 									className="w-full"
 									classNames={{
-										input: "!text-secondary",
+										input: "!text-secondary !text-gray-700 font-medium",
+										base: "text-secondary"
 									}}
 								/>
 							</div>

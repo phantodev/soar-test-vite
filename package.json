@@ -21,6 +21,7 @@
     "@heroui/listbox": "2.3.15",
     "@heroui/navbar": "2.2.15",
     "@heroui/snippet": "2.2.18",
+    "@heroui/spinner": "^2.2.14",
     "@heroui/switch": "2.2.15",
     "@heroui/system": "2.4.13",
     "@heroui/tabs": "^2.2.14",
