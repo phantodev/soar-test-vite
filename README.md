@@ -8,6 +8,13 @@ SOAR Financial Dashboard is a comprehensive financial management application bui
 
 [View Live Demo](https://soar-test-vite.vercel.app/)
 
+### User
+
+- Email: `soar@soar.com`
+- Password: `hire-me`
+
+PS: You can test the login with the other credentials to check ERROR HANDLE STATE.
+
 ## ✨ Features
 
 ### Dashboard Page
@@ -79,11 +86,46 @@ pnpm dev
 
 ## 🧪 Testing
 
-Run the test suite with:
+The project uses a comprehensive testing approach to ensure code quality and reliability:
+
+### Unit and Integration Tests
+
+We use **Vitest** as the testing framework for React components, custom hooks, and services:
 
 ```bash
-npm run test
+# Run all unit and integration tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Run tests with coverage
+pnpm test:coverage
 ```
+
+### End-to-End (E2E) Tests
+
+We use **Playwright** for E2E tests that simulate real user interactions across different browsers:
+
+```bash
+# Install browsers for Playwright
+pnpm exec playwright install
+
+# Run E2E tests
+pnpm test:e2e
+
+# Run E2E tests in UI mode
+pnpm test:e2e:ui
+```
+
+### Test Structure
+
+- `src/__tests__/`: Unit and integration tests
+  - `components/`: Tests for React components
+  - `hooks/`: Tests for custom hooks
+  - `pages/`: Tests for complete pages
+  - `services/`: Tests for services and APIs
+- `e2e/`: End-to-end tests with Playwright
 
 ## 🏗️ Build for Production
 
@@ -139,7 +181,7 @@ The application follows a component-based architecture with clear separation of 
 
 ## 👨‍💻 Developer
 
-Developed with ❤️ by [Your Name]
+Developed with ❤️ by Eduardo Burko - Phantodev
 
 ## 📄 License
 
