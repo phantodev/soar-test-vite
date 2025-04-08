@@ -7,6 +7,7 @@ import { useUserStore } from "../store/useUserStore";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { formatDateFromDatePicker } from "../utils/dateUtils";
+import ImageCropper from "../components/ImageCropper";
 
 const SettingsPage: FC = () => {
 	const [activeTab, setActiveTab] = useState("profile");
@@ -33,31 +34,31 @@ const SettingsPage: FC = () => {
 	// Local form state - initialized with memoized values
 	const [formData, setFormData] = useState(initialValues);
 
-	// Estado específico para a data de nascimento - converte a string do Zustand para um objeto DateValue
+	// Specific state for date of birth - converts the Zustand string to a DateValue object
 	const [dateOfBirth, setDateOfBirth] = useState(() => {
 		try {
-			// Verificamos se dateOfBirth é uma string válida
+			// Check if dateOfBirth is a valid string
 			const dateStr =
 				typeof initialValues.dateOfBirth === "string"
 					? initialValues.dateOfBirth
 					: formattedToday;
 
-			// Extrair os componentes da data da string (yyyy-MM-dd)
+			// Extract date components from the string (yyyy-MM-dd)
 			const [year, month, day] = dateStr.split("-").map(Number);
 
-			// Criar o objeto DateValue usando parseDate sem adicionar informações de hora
-			// Isso evita problemas de fuso horário
+			// Create DateValue object using parseDate without adding time information
+			// This prevents timezone issues
 			return parseDate(
 				`${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`,
 			);
 		} catch (error) {
-			console.error("Erro ao converter data:", error);
-			// Em caso de erro, usamos a data atual
+			console.error("Error converting date:", error);
+			// In case of error, use current date
 			return parseDate(formattedToday);
 		}
 	});
 
-	// Atualiza o formData quando a data de nascimento muda
+	// Update formData when date of birth changes
 	useEffect(() => {
 		if (dateOfBirth) {
 			const formattedDate = formatDateFromDatePicker(dateOfBirth);
@@ -77,6 +78,50 @@ const SettingsPage: FC = () => {
 
 	// Reference for datepicker to allow programmatic focus
 	const datePickerRef = useRef<HTMLDivElement>(null);
+	// Reference for file input
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	
+	// State for image cropping modal
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	// State for selected image
+	const [imageSrc, setImageSrc] = useState<string | null>(null);
+
+	// Function to open file selector
+	const handleEditPicture = () => {
+		if (fileInputRef.current) {
+			fileInputRef.current.click();
+		}
+	};
+
+	// Function to handle file selection
+	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (event.target.files && event.target.files.length > 0) {
+			const reader = new FileReader();
+			reader.addEventListener("load", () => {
+				if (typeof reader.result === "string") {
+					setImageSrc(reader.result);
+					setIsModalOpen(true);
+				}
+			});
+			reader.readAsDataURL(event.target.files[0]);
+		}
+		// Clear input to allow selecting the same file again
+		if (event.target) {
+			event.target.value = "";
+		}
+	};
+
+	// Function to update profile image after cropping
+	const handleCropComplete = (croppedImage: string) => {
+		setFormData((prev) => ({
+			...prev,
+			profilePicture: croppedImage,
+		}));
+		toast.success("Image updated successfully!", {
+			position: "top-right",
+			autoClose: 3000,
+		});
+	};
 
 	// Custom email validation
 	const validateEmail = (email: string): boolean => {
@@ -231,10 +276,20 @@ const SettingsPage: FC = () => {
 									className="object-cover w-full h-full"
 								/>
 							</div>
+							{/* Input de arquivo oculto */}
+							<input
+								type="file"
+								ref={fileInputRef}
+								accept="image/*"
+								className="hidden"
+								onChange={handleFileChange}
+								aria-label="Select profile image"
+							/>
 							<button
 								type="button"
-								className="absolute bottom-0 right-0 bg-gray-800 text-white rounded-full p-1 shadow-md"
+								className="absolute bottom-0 right-0 bg-gray-800 text-white rounded-full p-1 shadow-md hover:bg-gray-700 transition-colors"
 								aria-label="Edit profile picture"
+								onClick={handleEditPicture}
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -622,6 +677,14 @@ const SettingsPage: FC = () => {
 					</div>
 				</div>
 			)}
+
+			{/* Componente de recorte de imagem */}
+			<ImageCropper
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				imageSrc={imageSrc}
+				onCropComplete={handleCropComplete}
+			/>
 
 			{activeTab === "preferences" && (
 				<div className="p-4">
