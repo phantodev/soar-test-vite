@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import CardComponent from "./CardComponent";
-import RecentTransactionsComponent from "./RecentTransactionsComponent";
+import RecentTransactions from "./RecentTransactions";
 
 const MyCardsSection: FC = () => {
 	// Sample data for cards
@@ -104,7 +104,7 @@ const MyCardsSection: FC = () => {
 					</h2>
 				</div>
 				<div className="flex justify-center md:justify-start">
-					<RecentTransactionsComponent transactions={transactions} />
+					<RecentTransactions transactions={transactions} />
 				</div>
 			</div>
 		</section>
