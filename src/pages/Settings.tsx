@@ -36,17 +36,71 @@ const SettingsPage: FC = () => {
 	const [formData, setFormData] = useState(initialValues);
 	// Add loading state for the Save button
 	const [isLoading, setIsLoading] = useState(false);
+	// Add error states for form validation
+	const [errors, setErrors] = useState<Record<string, boolean>>({});
+	// State for password visibility toggle
+	const [showPassword, setShowPassword] = useState(false);
 
 	// Handle input changes
 	const handleInputChange = (field: string, value: string | DateValue) => {
+		// Clear error state when user types in a field
+		if (errors[field]) {
+			setErrors(prev => ({ ...prev, [field]: false }));
+		}
+
 		setFormData((prev) => ({
 			...prev,
 			[field]: value,
 		}));
 	};
 
+	// Validate form fields
+	const validateForm = () => {
+		const fieldsToValidate = [
+			"name",
+			"userName",
+			"email",
+			"password",
+			"presentAddress",
+			"permanentAddress",
+			"city",
+			"postalCode",
+			"country"
+		];
+
+		const newErrors: Record<string, boolean> = {};
+		let hasErrors = false;
+
+		// Check each field for empty values
+		for (const field of fieldsToValidate) {
+			const value = formData[field as keyof typeof formData];
+			const isEmpty = typeof value === 'string' && value.trim() === '';
+			
+			if (isEmpty) {
+				newErrors[field] = true;
+				hasErrors = true;
+			}
+		}
+
+		setErrors(newErrors);
+		return !hasErrors;
+	};
+
 	// Save changes to Zustand store
 	const handleSave = () => {
+		// Validate form before saving
+		if (!validateForm()) {
+			toast.error("Form with error. Please check!", {
+				position: "top-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+			});
+			return;
+		}
+
 		setIsLoading(true);
 		// Simulate a small delay for better UX
 		setTimeout(() => {
@@ -138,6 +192,8 @@ const SettingsPage: FC = () => {
 									value={formData.name}
 									onChange={(e) => handleInputChange("name", e.target.value)}
 									className="w-full"
+									isInvalid={errors.name}
+									errorMessage={errors.name ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -162,6 +218,8 @@ const SettingsPage: FC = () => {
 										handleInputChange("userName", e.target.value)
 									}
 									className="w-full"
+									isInvalid={errors.userName}
+									errorMessage={errors.userName ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -184,6 +242,8 @@ const SettingsPage: FC = () => {
 									value={formData.email}
 									onChange={(e) => handleInputChange("email", e.target.value)}
 									className="w-full"
+									isInvalid={errors.email}
+									errorMessage={errors.email ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -202,12 +262,57 @@ const SettingsPage: FC = () => {
 								<Input
 									size="lg"
 									id="password"
-									type="password"
+									type={showPassword ? "text" : "password"}
 									value={formData.password}
 									onChange={(e) =>
 										handleInputChange("password", e.target.value)
 									}
 									className="w-full"
+									isInvalid={errors.password}
+									errorMessage={errors.password ? "This field is required" : ""}
+									endContent={
+										<button
+											type="button"
+											className="focus:outline-none"
+											onClick={() => setShowPassword(!showPassword)}
+										>
+											{showPassword ? (
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													className="h-5 w-5 text-gray-400"
+													viewBox="0 0 20 20"
+													fill="currentColor"
+													aria-labelledby="hide-password-title"
+													role="img"
+												>
+													<title id="hide-password-title">Hide Password</title>
+													<path
+														fillRule="evenodd"
+														d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+														clipRule="evenodd"
+													/>
+													<path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+												</svg>
+											) : (
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													className="h-5 w-5 text-gray-400"
+													viewBox="0 0 20 20"
+													fill="currentColor"
+													aria-labelledby="show-password-title"
+													role="img"
+												>
+													<title id="show-password-title">Show Password</title>
+													<path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+													<path
+														fillRule="evenodd"
+														d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+														clipRule="evenodd"
+													/>
+												</svg>
+											)}
+										</button>
+									}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -251,6 +356,8 @@ const SettingsPage: FC = () => {
 										handleInputChange("presentAddress", e.target.value)
 									}
 									className="w-full"
+									isInvalid={errors.presentAddress}
+									errorMessage={errors.presentAddress ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -275,6 +382,8 @@ const SettingsPage: FC = () => {
 										handleInputChange("permanentAddress", e.target.value)
 									}
 									className="w-full"
+									isInvalid={errors.permanentAddress}
+									errorMessage={errors.permanentAddress ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -297,6 +406,8 @@ const SettingsPage: FC = () => {
 									value={formData.city}
 									onChange={(e) => handleInputChange("city", e.target.value)}
 									className="w-full"
+									isInvalid={errors.city}
+									errorMessage={errors.city ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -321,6 +432,8 @@ const SettingsPage: FC = () => {
 										handleInputChange("postalCode", e.target.value)
 									}
 									className="w-full"
+									isInvalid={errors.postalCode}
+									errorMessage={errors.postalCode ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
@@ -343,6 +456,8 @@ const SettingsPage: FC = () => {
 									value={formData.country}
 									onChange={(e) => handleInputChange("country", e.target.value)}
 									className="w-full"
+									isInvalid={errors.country}
+									errorMessage={errors.country ? "This field is required" : ""}
 									classNames={{
 										input: "!text-secondary !text-gray-700 font-medium",
 										base: "text-secondary"
